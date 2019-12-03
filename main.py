@@ -1,87 +1,81 @@
 import pygame
 from board import Board
-import copy
-class Life(Board):
-    def __init__(self, width, height, rect, pos, width_w=500, height_w=500):
+import random
+class Minesweeper(Board):
+    def __init__(self, width, height, rect, pos, count_mines, width_w=500, height_w=500):
         super().__init__(width, height, rect, pos)
+        pygame.font.init()
         self.width_w = width_w
         self.height_w = height_w
+        self.count_mines = count_mines
         self.screen = pygame.display.set_mode((self.width_w, self.height_w))
+        self.font = pygame.font.SysFont("calibri", rect[0])
+        self.set_mines()
         self.run()
 
-    def next_move(self):
-        new_life = copy.deepcopy(self.board)
-        for i in range(self.height):
-            for j in range(self.width):
-                peoples = 0
-                peoples += self.re_checker(i - 1, j)
-                peoples += self.re_checker(i - 1, j - 1)
-                peoples += self.re_checker(i, j - 1)
-                peoples += self.re_checker(i + 1, j - 1)
-                peoples += self.re_checker(i + 1, j)
-                peoples += self.re_checker(i + 1, j + 1)
-                peoples += self.re_checker(i, j + 1)
-                peoples += self.re_checker(i - 1, j + 1)
-                if peoples == 3:
-                    new_life[i][j] = 1
-                elif new_life[i][j] == 1 and peoples == 2 or peoples == 3:
-                    pass
-                else:
-                    new_life[i][j] = 0
-        self.board = new_life
+    def set_mines(self):
+        if self.count_mines > self.width * self.height // 3 * 2:
+            for i in range(len(self.board)):
+                self.board[i] = list(map(10, self.board[i]))
+            count = 0
+            while count != (self.height * self.width) - self.count_mines:
+                x = random.randint(0, len(self.board))
+                y = random.randint(0, len(self.board[0]))
+                if self.board[x][y] == 10:
+                    count += 1
+        else:
+            count = 0
+            while count != self.count_mines:
+                x = random.randint(0, len(self.board) - 1)
+                y = random.randint(0, len(self.board[0]) - 1)
+                if self.board[y][x] == -1:
+                    self.board[y][x] = 10
+                    count += 1
+
+    def open_cell(self, pos):
+        if self.get_cell(pos):
+            if self.board[self.get_cell(pos)[0]][self.get_cell(pos)[1]] != 10:
+                mines = 0
+                i = self.get_cell(pos)[0]
+                j = self.get_cell(pos)[1]
+                mines += self.re_checker(i - 1, j)
+                mines += self.re_checker(i - 1, j - 1)
+                mines += self.re_checker(i, j - 1)
+                mines += self.re_checker(i + 1, j - 1)
+                mines += self.re_checker(i + 1, j)
+                mines += self.re_checker(i + 1, j + 1)
+                mines += self.re_checker(i, j + 1)
+                mines += self.re_checker(i - 1, j + 1)
+                self.board[self.get_cell(pos)[0]][self.get_cell(pos)[1]] = mines
 
     def render(self, screen):
         screen.fill((0, 0, 0))
         for i in range(self.height):
             for j in range(self.width):
-                if self.board[i][j] == 0:
+                if self.board[i][j] == -1:
                     pygame.draw.rect(screen, (255, 255, 255), (i * self.rect[0] + self.pos[0], j * self.rect[1] + self.pos[1],
                                                                self.rect[0], self.rect[1]), 1)
-                else:
-                    pygame.draw.rect(screen, (255, 255, 255),
+                elif self.board[i][j] == 10:
+                    pygame.draw.rect(screen, (255, 0, 0),
                                      (i * self.rect[0] + self.pos[0], j * self.rect[1] + self.pos[1],
                                       self.rect[0], self.rect[1]), 0)
+                else:
+                    text = self.font.render(f'{self.board[i][j]}', True, (0, 128, 0))
+                    pygame.draw.rect(screen, (255, 255, 255),
+                                     (i * self.rect[0] + self.pos[0], j * self.rect[1] + self.pos[1],
+                                      self.rect[0], self.rect[1]), 1)
+                    screen.blit(text, (i * self.rect[0] + self.pos[0], j * self.rect[1] + self.pos[1]))
 
     def run(self):
         pygame.init()
         running = True
         self.screen.fill((0, 0, 0))
-        emode = 1
-        reader = 0
-        fps = 60
-        clock = pygame.time.Clock()
         while running:
-            clock.tick(fps)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1 and emode == 1:
-                        reader = 1
-                    if event.button == 4 and emode == 0:
-                        fps += 5
-                    if event.button == 5 and emode == 0:
-                        fps -= 5
-                    if fps > 100:
-                        fps = 100
-                    elif fps <= 0:
-                        fps = 1
-                if event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:
-                        reader = 0
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        emode = self.checker(emode)
-                        reader = 0
-                        if emode == 1:
-                            fps = 60
-                try:
-                    if reader == 1:
-                        self.get_click(event.pos)
-                except:
-                    pass
-            if emode == 0:
-                self.next_move()
+                    self.open_cell(event.pos)
             self.render(self.screen)
             pygame.display.flip()
-Life(50, 50, (10, 10), (0, 0))
+Minesweeper(5, 5, (40, 40), (0, 0), 10)

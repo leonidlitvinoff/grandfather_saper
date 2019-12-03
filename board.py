@@ -4,7 +4,7 @@ class Board:
     def __init__(self, width, height, rect, pos):
         self.width = width
         self.height = height
-        self.board = [[0] * width for _ in range(height)]
+        self.board = [[-1] * width for _ in range(height)]
         self.rect = rect
         self.pos = pos
 
@@ -26,7 +26,9 @@ class Board:
     def re_checker(self, x, y):
         try:
             var = self.board[x][y]
-            return var
+            if var == 10 and x >= 0 and y >= 0:
+                return 1
+            return 0
         except:
             return 0
 
