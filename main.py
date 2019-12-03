@@ -16,12 +16,13 @@ class Minesweeper(Board):
     def set_mines(self):
         if self.count_mines > self.width * self.height // 3 * 2:
             for i in range(len(self.board)):
-                self.board[i] = list(map(10, self.board[i]))
+                self.board[i] = list(map(lambda x: 10, self.board[i]))
             count = 0
             while count != (self.height * self.width) - self.count_mines:
-                x = random.randint(0, len(self.board))
-                y = random.randint(0, len(self.board[0]))
+                x = random.randint(0, len(self.board) - 1)
+                y = random.randint(0, len(self.board[0]) - 1)
                 if self.board[x][y] == 10:
+                    self.board[x][y] = -1
                     count += 1
         else:
             count = 0
@@ -78,4 +79,4 @@ class Minesweeper(Board):
                     self.open_cell(event.pos)
             self.render(self.screen)
             pygame.display.flip()
-Minesweeper(5, 5, (40, 40), (0, 0), 10)
+Minesweeper(5, 5, (40, 40), (0, 0), 25)
